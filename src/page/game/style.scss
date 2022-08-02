@@ -1,0 +1,101 @@
+.game_section {
+  width: 500px;
+  height: 500px;
+  margin: auto;
+  margin-top: 50px;
+  border: 1px solid #eeeeee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #49382d;
+
+  .middleContent{
+    width: 100%;
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    .chessBoard {
+      background-color: #b47751;
+      .chessBoard_list {
+        width: 300px;
+        height: 300px;
+        list-style: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        .chess_item {
+          box-sizing: border-box;
+          width: 100px;
+          height: 100px;
+          line-height: 100px;
+          text-align: center;
+          border-bottom: 2px solid #936142;
+          cursor: pointer;
+        }
+        .chess_item:nth-child(3n-1){
+          border-left:  2px solid #936142;
+          border-right:  2px solid #936142;
+        }
+        .chess_item:nth-child(7n),.chess_item:nth-child(8n),.chess_item:nth-child(9n){
+          border-bottom: none;
+        }
+        .chess_item:hover {
+          background-color: #936142;
+        }
+      }
+    }
+    .player {
+      width: 80px;
+      display: flex;
+      align-items: center;
+      .player_display {
+        width: 66px;
+        height: 66px;
+        border: 1px solid #b47751;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 66px;
+        position: relative;
+        background-color: #b8b8b8;
+      }
+      .player_display.active_player {
+        background-color: #936142;
+        color: #ffffff;
+      }
+      .winnerFlag {
+        position: absolute;
+        color: #f4ff5a;
+        font-weight: 600;
+        font-size: 14px;
+        top: -39px;
+        left: 4px;
+      }
+    }
+  }
+  .timer, .startBox {
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .startBox {
+    .startBtn{
+      width: 80px;
+      height: 36px;
+      line-height: 20px;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid #b47751;
+      border-radius: 4px;
+      color: #b47751;
+    }
+  }
+  .timer {
+    .second {
+      font-size: 24px;
+      font-weight: 600;
+      color: rgb(229, 61, 46);
+    }
+  }
+}
