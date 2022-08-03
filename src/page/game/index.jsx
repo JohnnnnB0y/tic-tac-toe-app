@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styles from './style.scss';
+import { judgeWinner } from './utils';
 // 初始棋盘数据
 const initChessData = Array.from(new Array(9), (el, index) => ({ id: index, player: 0 }));
 /**
@@ -8,49 +9,42 @@ const initChessData = Array.from(new Array(9), (el, index) => ({ id: index, play
  * currentPlayer：处于当前轮次的玩家 0 代表游戏未开始 1 代表player1的轮次 2 代表player2的轮次
  */
 const initGameInfo = { status: 'preparing', winner: 0, currentPlayer: 0 };
-// 所有获胜的组合
-const winArr = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8],
-  [0, 3, 6], [1, 4, 7], [2, 5, 8],
-  [0, 4, 8], [2, 4, 6]
-];
 // 默认提示信息
 const initNoticeInfo = { visible: false, message: '' };
+// 不同状态的提示信息
 const statusInfo = { 'preparing': '开始游戏', 'going': '游戏进行中', 'over': '重新开始' };
-// 处理校验逻辑
-const judgeWinner = (chessData, currentPlayer) => {
-  const playData = new Map([[1, []], [2, []]]);
-  chessData.forEach(el => {
-    const { id, player } = el;
-    if (player > 0) {
-      const arr = playData.get(player);
-      playData.set(player, [...arr, id]);
-    }
-  });
-  const currPlayerData = playData.get(currentPlayer);
-  let winner = 0;
-  if (currPlayerData.length >= 3) {
-    // 下了三颗棋子才校验
-    winArr.forEach((item) => {
-      if (currPlayerData.filter(el => item.includes(el))?.length >= 3) {
-        winner = currentPlayer;
-        return;
-      }
-    });
-    // 没有玩家获胜且落棋数量达到最大 判定平局
-    if (currPlayerData.length === 5 && winner === 0) {
-      winner = -1;
-    }
-  }
-  return { winner };
-}
 
 
 const TicTacToeGame = () => {
-  // const [second, setSecond] = useState(5);
+  const [second, setSecond] = useState(5);
+  const [timer, setTimer] = useState(null);
   const [chessData, setChessData] = useState(initChessData);
   const [gameInfo, setGameInfo] = useState(initGameInfo);
   const [noticeInfo, setNoticeInfo] = useState(initNoticeInfo);
+  // 开启倒计时
+  const cutDown = () => {
+    setSecond(5);
+    timer && clearInterval(timer);
+    const newTimer = setInterval(() => {
+      setSecond(second => second - 1);
+    }, 1000);
+    setTimer(newTimer);
+  }
+  // 关闭倒计时
+  const closeTimer = () => {
+    timer && clearInterval(timer);
+    timer && setTimer(null);
+  }
+  // 倒计时为0 关闭或重启倒计时
+  if (second === 0) {
+    if (gameInfo.status === 'going' && !timer) {
+      const curr = gameInfo.currentPlayer === 1 ? 2 : 1;
+      setGameInfo({ ...gameInfo, currentPlayer: curr });
+      cutDown();
+    } else {
+      closeTimer();
+    }
+  }
 
   // 点击棋盘格
   const handleChessClick = (v) => {
@@ -66,7 +60,7 @@ const TicTacToeGame = () => {
     const { id, player } = v;
     // 当前棋盘格 已经有玩家选择了 就不能选择
     if (player > 0) return;
-    // 获取新的棋盘信息
+    // 更新棋盘信息
     const newChessData = chessData.map((el) => {
       return el.id === id ? {
         ...el,
@@ -85,6 +79,7 @@ const TicTacToeGame = () => {
     if (newWinner === 0 || newWinner !== currentPlayer) {
       const curr = currentPlayer === 1 ? 2 : 1;
       setGameInfo({ ...gameInfo, currentPlayer: curr });
+      cutDown();
     }
     // 平局
     if (newWinner === -1) {
@@ -95,20 +90,25 @@ const TicTacToeGame = () => {
     if (newWinner === currentPlayer) {
       setNoticeInfo({ visible: true, message: `恭喜 player ${newWinner}，获胜` });
       setGameInfo({ ...gameInfo, status: 'over', winner: newWinner });
+      closeTimer();
     }
   }
   // 点击开始/重新开始
   const onStartClick = () => {
     const { status } = gameInfo;
-    if (status === 'preparing') {
-      setGameInfo({ ...gameInfo, status: 'going', currentPlayer: 1 });
-      handleNotice();
-    }
-    if (status === 'over') {
+    if (status === 'preparing' || status === 'over') {
       setGameInfo({ ...initGameInfo, status: 'going', currentPlayer: 1 });
       setChessData(initChessData);
       handleNotice();
+      cutDown();
     }
+  }
+  // 重置游戏
+  const resetGame = () => {
+    setGameInfo(initGameInfo);
+    setChessData(initChessData);
+    setNoticeInfo(initNoticeInfo)
+    closeTimer();
   }
   // 关闭提示
   const handleNotice = () => {
@@ -117,9 +117,13 @@ const TicTacToeGame = () => {
   return (
     <section className='game_section'>
       <div className='timer'>
-        {/* <div>
-          <span>倒计时：</span><span className='second'>{second}</span>
-        </div> */}
+        {
+          gameInfo.status === 'going' && (
+            <div className='timer_msg'>
+              <span className='label'>倒计时：</span><span className='second'>{second}</span>
+            </div>
+          )
+        }
       </div>
       <div className='middleContent'>
         <div className='player'>
@@ -168,6 +172,11 @@ const TicTacToeGame = () => {
         noticeInfo.visible && (<div className='notice'>
           <span className='message'>{noticeInfo.message}</span>
         </div>)
+      }
+      {
+        gameInfo.status !== 'preparing' && (
+          <div className='reset_btn' onClick={resetGame}>重置</div>
+        )
       }
     </section>
   )

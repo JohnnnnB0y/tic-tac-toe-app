@@ -92,10 +92,13 @@
     }
   }
   .timer {
+    .timer_msg .label {
+      color: #ffffff;
+    }
     .second {
       font-size: 24px;
       font-weight: 600;
-      color: rgb(229, 61, 46);
+      color: #de5043;
     }
   }
   .notice {
@@ -112,5 +115,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .reset_btn {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    background-color: #eeeeee;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #49382d;
   }
 }
