@@ -1,13 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styles from './style.scss';
-// 初始化数据
+// 初始棋盘数据
 const initChessData = Array.from(new Array(9), (el, index) => ({ id: index, player: 0 }));
+/**
+ * status：preparing ｜ going ｜ over
+ * winner：获胜者 0 代表没有玩家赢得比赛 1代表player1赢 2代表player2赢
+ * currentPlayer：处于当前轮次的玩家 0 代表游戏未开始 1 代表player1的轮次 2 代表player2的轮次
+ */
 const initGameInfo = { status: 'preparing', winner: 0, currentPlayer: 0 };
+// 所有获胜的组合
 const winArr = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
   [0, 3, 6], [1, 4, 7], [2, 5, 8],
   [0, 4, 8], [2, 4, 6]
 ];
+// 默认提示信息
+const initNoticeInfo = { visible: false, message: '' };
 const statusInfo = { 'preparing': '开始游戏', 'going': '游戏进行中', 'over': '重新开始' };
 // 处理校验逻辑
 const judgeWinner = (chessData, currentPlayer) => {
@@ -20,33 +28,40 @@ const judgeWinner = (chessData, currentPlayer) => {
     }
   });
   const currPlayerData = playData.get(currentPlayer);
-  const winnerInfo = { winner: 0 };
+  let winner = 0;
   if (currPlayerData.length >= 3) {
-    // 下了三颗棋子才校验是否获胜
+    // 下了三颗棋子才校验
     winArr.forEach((item) => {
       if (currPlayerData.filter(el => item.includes(el))?.length >= 3) {
-        winnerInfo.winner = currentPlayer;
+        winner = currentPlayer;
         return;
       }
     });
+    // 没有玩家获胜且落棋数量达到最大 判定平局
+    if (currPlayerData.length === 5 && winner === 0) {
+      winner = -1;
+    }
   }
-  return winnerInfo;
+  return { winner };
 }
 
 
 const TicTacToeGame = () => {
-  const [second, setSecond] = useState(5);
+  // const [second, setSecond] = useState(5);
   const [chessData, setChessData] = useState(initChessData);
   const [gameInfo, setGameInfo] = useState(initGameInfo);
+  const [noticeInfo, setNoticeInfo] = useState(initNoticeInfo);
 
   // 点击棋盘格
   const handleChessClick = (v) => {
-    const { status, winner, currentPlayer } = gameInfo;
+    const { status, currentPlayer } = gameInfo;
     if (status === 'preparing') {
-      return alert('请点击开始游戏！')
+      setNoticeInfo({ visible: true, message: '请点击开始游戏！' })
+      return;
     }
     if (status === 'over') {
-      return alert('游戏已经结束，请开始下一把游戏！')
+      setNoticeInfo({ visible: true, message: '游戏已经结束，请重新开始！' });
+      return;
     }
     const { id, player } = v;
     // 当前棋盘格 已经有玩家选择了 就不能选择
@@ -63,26 +78,41 @@ const TicTacToeGame = () => {
   }
   // 校验验游戏结果
   const verifyResult = (chessData) => {
-    const { currentPlayer } = gameInfo;
-    if (currentPlayer === 0) return;
+    const { currentPlayer, status } = gameInfo;
+    if (status !== 'going' || currentPlayer === 0) return;
     const { winner: newWinner } = judgeWinner(chessData, currentPlayer);
+    // 没有人获胜 切换玩家 继续游戏
     if (newWinner === 0 || newWinner !== currentPlayer) {
-      const curr = currentPlayer > 0 && currentPlayer === 1 ? 2 : 1;
+      const curr = currentPlayer === 1 ? 2 : 1;
       setGameInfo({ ...gameInfo, currentPlayer: curr });
-    } else {
+    }
+    // 平局
+    if (newWinner === -1) {
+      setNoticeInfo({ visible: true, message: '平局，请重新开始游戏！' });
       setGameInfo({ ...gameInfo, status: 'over', winner: newWinner });
-      alert(`恭喜 player ${newWinner}，获胜`);
+    }
+    // 玩家获胜
+    if (newWinner === currentPlayer) {
+      setNoticeInfo({ visible: true, message: `恭喜 player ${newWinner}，获胜` });
+      setGameInfo({ ...gameInfo, status: 'over', winner: newWinner });
     }
   }
+  // 点击开始/重新开始
   const onStartClick = () => {
     const { status } = gameInfo;
     if (status === 'preparing') {
       setGameInfo({ ...gameInfo, status: 'going', currentPlayer: 1 });
+      handleNotice();
     }
     if (status === 'over') {
       setGameInfo({ ...initGameInfo, status: 'going', currentPlayer: 1 });
       setChessData(initChessData);
+      handleNotice();
     }
+  }
+  // 关闭提示
+  const handleNotice = () => {
+    setNoticeInfo({ visible: false, message: '' });
   }
   return (
     <section className='game_section'>
@@ -134,6 +164,11 @@ const TicTacToeGame = () => {
           }
         </button>
       </div>
+      {
+        noticeInfo.visible && (<div className='notice'>
+          <span className='message'>{noticeInfo.message}</span>
+        </div>)
+      }
     </section>
   )
 }
